@@ -1,106 +1,118 @@
-const Task = {
 
-   counter: 8,
-   dragged: null,
+class Task {
+   constructor(id = null, content = '') {
 
-   makeChanges(task) {
-      task.addEventListener('dblclick', (event) => {
-         task.setAttribute('contenteditable', 'true');
-         task.removeAttribute('draggable');
-         task.closest('.column').removeAttribute('draggable');
-         task.focus();
+      const element = this.element = document.createElement('div');
+      element.classList.add('note');
+      element.setAttribute('draggable', 'true');
+      element.textContent = content;
+
+      if (id) {
+         element.setAttribute('data-note-id', id);
+      }
+      else {
+         element.setAttribute('data-note-id', Task.counter);
+         Task.counter++;
+      }
+
+      console.log(Task.counter);
+
+      element.addEventListener('dblclick', (event) => {
+         element.setAttribute('contenteditable', 'true');
+         element.removeAttribute('draggable');
+         this.element.closest('.column').removeAttribute('draggable');
+         element.focus();
       });
-      task.addEventListener('blur', (event) => {
-         task.removeAttribute('contenteditable');
-         if (!task.textContent.trim().length) {
-            task.remove();
+      element.addEventListener('blur', (event) => {
+         element.removeAttribute('contenteditable');
+         if (!element.textContent.trim().length) {
+            element.remove();
          } else {
-            task.setAttribute('draggable', 'true');
-            task.closest('.column').setAttribute('draggable', 'true');
+            element.setAttribute('draggable', 'true');
+            this.element.closest('.column').setAttribute('draggable', 'true');
          }
-
+         Application.save();
       });
 
-      task.addEventListener('dragstart', Task.dragstart);
-      task.addEventListener('dragend', Task.dragend);
-      task.addEventListener('dragenter', Task.dragenter);
-      task.addEventListener('dragover', Task.dragover);
-      task.addEventListener('dragleave', Task.dragleave);
-      task.addEventListener('drop', Task.drop);
-   },
 
-   create() {
-      const task = document.createElement('div');
-      task.classList.add('note');
-      task.setAttribute('draggable', 'true');
-      task.setAttribute('data-note-id', Task.counter);
 
-      Task.counter++;
-      Task.makeChanges(task);
-      console.log(task);
-      return task;
-
-   },
+      element.addEventListener('dragstart', this.dragstart.bind(this));
+      element.addEventListener('dragend', this.dragend.bind(this));
+      element.addEventListener('dragenter', this.dragenter.bind(this));
+      element.addEventListener('dragover', this.dragover.bind(this));
+      element.addEventListener('dragleave', this.dragleave.bind(this));
+      element.addEventListener('drop', this.drop.bind(this));
+   }
 
    dragstart(event) {
-      Task.dragged = this;
-      this.classList.add('dragged');
+      Task.dragged = this.element;
+      this.element.classList.add('dragged');
       event.stopPropagation();
-   },
+   }
 
    dragend(event) {
+      event.stopPropagation();
+
       Task.dragged = null;
-      this.classList.remove('dragged');
+      this.element.classList.remove('dragged');
+
       document
          .querySelectorAll('.note')
          .forEach(item => item.classList.remove('under'));
 
-      event.stopPropagation();
-   },
+      Application.save();
+   }
 
    dragenter(event) {
-      if (!Task.dragged || this === Task.dragged) {
+      if (!Task.dragged || this.element === Task.dragged) {
          return;
       }
-      this.classList.add('under');
-   },
+      this.element.classList.add('under');
+   }
 
    dragover(event) {
       event.preventDefault();
-      if (!Task.dragged || this === Task.dragged) {
+      if (!Task.dragged || this.element === Task.dragged) {
          return;
       }
-   },
+   }
 
    dragleave(event) {
-      if (!Task.dragged || this === Task.dragged) {
+      if (!Task.dragged || this.element === Task.dragged) {
          return;
       }
-      this.classList.remove('under');
-   },
+      this.element.classList.remove('under');
+   }
 
    drop(event) {
       event.stopPropagation();
 
-      if (!Task.dragged || this === Task.dragged) {
+      if (!Task.dragged || this.element === Task.dragged) {
          return;
       }
 
-      if (this.parentElement === Task.dragged.parentElement) {
-         const node = Array.from(this.parentElement.querySelectorAll('.note'));
-         const indexA = node.indexOf(this);
+      if (this.element.parentElement === Task.dragged.parentElement) {
+         const node = Array.from(this.element.parentElement.querySelectorAll('.note'));
+         const indexA = node.indexOf(this.element);
          const indexB = node.indexOf(Task.dragged);
 
          if (indexA < indexB) {
-            this.parentElement.insertBefore(Task.dragged, this);
+            this.element.parentElement.insertBefore(Task.dragged, this.element);
          } else {
-            this.parentElement.insertBefore(Task.dragged, this.nextElementSibling);
+            this.element.parentElement.insertBefore(Task.dragged, this.element.nextElementSibling);
          }
       }
 
       else {
-         this.parentElement.insertBefore(Task.dragged, this);
+         this.element.parentElement.insertBefore(Task.dragged, this.element);
       }
    }
+}
 
-};
+Task.counter = 8;
+Task.dragged = null;
+
+
+
+
+
